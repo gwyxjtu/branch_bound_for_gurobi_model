@@ -2,22 +2,9 @@ import gurobipy as gp
 from gurobipy import GRB
 
 """branch and bound code
-输入gurobi的MIP模型，目前仅仅支持binary variable
+输入gurobi的MIP模型 目前仅仅支持binary variable
 """
 
-def heuristic_solve(problem):
-    problem.Params.OutputFlag = 0
-    problem.optimize()
-    if problem.status == GRB.INFEASIBLE:
-        return None, None
-    # for v in problem.getVars():
-    #     print('%s %g' % (v.VarName, v.X))
-    # print('Obj: %g' % problem.ObjVal)
-    return problem.ObjVal, problem.getVars()
-
-def choice_node(condidate_node):
-    node = condidate_node.pop(0)
-    return node, condidate_node
 
 class Node:
     def __init__(self, model, upper_bound, lower_bound, candidate_vars):
@@ -121,40 +108,36 @@ class Node:
         self.model.write("model.lp")
     
 
+def heuristic_solve(problem):
+    problem.Params.OutputFlag = 0
+    problem.optimize()
+    if problem.status == GRB.INFEASIBLE:
+        return None, None
+    # for v in problem.getVars():
+    #     print('%s %g' % (v.VarName, v.X))
+    # print('Obj: %g' % problem.ObjVal)
+    return problem.ObjVal, problem.getVars()
+
+def choice_node(condidate_node):
+    """选择下一个计算的节点 现在也是pop0
+
+    Args:
+        condidate_node (_type_): 维护的还没计算的节点
+
+    Returns:
+        _type_: _description_
+    """
+    node = condidate_node.pop(0)
+    return node, condidate_node
 
 
 def solve(model,candidate_vars):
-
     model.update()
-
-# m = gp.Model("mip1")
-
-# # Create variables
-# x = m.addVar(vtype=GRB.BINARY, name="x")
-# y = m.addVar(vtype=GRB.BINARY, name="y")
-# z = m.addVar(vtype=GRB.BINARY, name="z")
-
-# # Set objective
-# m.setObjective(x + y + 2 * z, GRB.MAXIMIZE)
-
-# # Add constraint: x + 2 y + 3 z <= 4
-# m.addConstr(x + 2 * y + 3 * z <= 4, "c0")
-
-# # Add constraint: x + y >= 1
-# m.addConstr(x + y >= 1, "c1")
-
-# # Optimize model
-# m.optimize()
-
-
     upper_bound, lower_bound = float('inf'), float('-inf')
     model_relax = model.relax()
-# root_node = Node(model = model_relax, upper_bound = upper_bound, lower_bound = lower_bound, candidate_vars = [i for i in range(model.NumVars)])
     root_node = Node(model = model_relax, upper_bound = upper_bound, lower_bound = lower_bound, candidate_vars = candidate_vars)
-
     candidate_node = [root_node]
     current_optimum = None
-
     while candidate_node:
         # print(candidate_node)
         node, candidate_node = choice_node(candidate_node)
